@@ -30,7 +30,6 @@ public:
 };
 
 class PidController {
-  
 public:
   struct Gains {
     double p;
@@ -40,12 +39,20 @@ public:
     Gains(double p, double i, double d): p(p), i(i), d(d) {}
   };
 
-  PidController(const Gains& gains, double set_point): gains(gains), set_point(set_point) {}
+  PidController(const Gains& gains, double set_point):
+    gains(gains),
+    set_point(set_point),
+    error_i(0),
+    prev_error(0),
+    buffer_error_d(LowPassFilter(10)) {}
   double operator()(double measured_value, double delta_t);
 
 private:
   Gains gains;
   double set_point;
+  double error_i;
+  double prev_error;
+  LowPassFilter buffer_error_d;
 };
 
 #endif
