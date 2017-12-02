@@ -59,6 +59,7 @@ public:
 };
 
 struct Measurement {
+  double delta_t;
   double cte;
   double speed;
   double angle;
@@ -72,7 +73,13 @@ int main()
   PidController steer_controller(PidController::Gains(0.11, 0.033, 0.11), 0);
   time_t timestamp = -1;
 
-  h.onMessage([&throttle_controller, &steer_controller, &timestamp](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  auto f = [&throttle_controller, &steer_controller](SimulatorResponder& responder, const Measurement& m) {
+    double steer_angle = steer_controller(m.cte, m.delta_t);
+    double throttle = throttle_controller(m.speed, m.delta_t);
+    responder.control(steer_angle, throttle);
+  };
+
+  h.onMessage([&timestamp, &f](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
       SimulatorResponder responder(ws);
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -91,12 +98,10 @@ int main()
           m.angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
 	  time_t cur_ts = clock();
-	  double delta_t = (timestamp < 0) ? 0 : ((float)(cur_ts - timestamp)) / CLOCKS_PER_SEC;
+	  m.delta_t = (timestamp < 0) ? 0 : ((float)(cur_ts - timestamp)) / CLOCKS_PER_SEC;
 	  timestamp = cur_ts;
 
-	  double steer_angle = steer_controller(m.cte, delta_t);
-	  double throttle = throttle_controller(m.speed, delta_t);
-	  responder.control(steer_angle, throttle);
+	  f(responder, m);
         }
       } else {
 	responder.manual();
