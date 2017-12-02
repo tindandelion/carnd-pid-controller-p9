@@ -65,10 +65,29 @@ struct Measurement {
   double angle;
 };
 
+class Simulator {
+public:
+  uWS::Hub& hub;
+
+  Simulator(uWS::Hub& hub): hub(hub) {}
+
+  void run(int port) {
+    bool listening = hub.listen(port);
+    if (listening) {
+      std::cout << "Listening on port " << port << std::endl;
+    } else {
+      std::cerr << "Unable to listen on port " << port << std::endl;
+      return;
+    }
+    hub.run();
+  }
+};
+
 int main()
 {
   uWS::Hub h;
-
+  Simulator sim(h);
+  
   PidController throttle_controller(PidController::Gains(0.8, 0, 0), 40.0);
   PidController steer_controller(PidController::Gains(0.11, 0.033, 0.11), 0);
   time_t timestamp = -1;
@@ -134,14 +153,5 @@ int main()
   });
 
   int port = 4567;
-  if (h.listen(port))
-  {
-    std::cout << "Listening to port " << port << std::endl;
-  }
-  else
-  {
-    std::cerr << "Failed to listen to port" << std::endl;
-    return -1;
-  }
-  h.run();
+  sim.run(port);
 }
