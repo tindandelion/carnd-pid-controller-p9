@@ -30,15 +30,44 @@ std::string hasData(std::string s) {
   return "";
 }
 
+class SimulatorResponder {
+  uWS::WebSocket<uWS::SERVER> ws;
+  
+  void send(const std::string& msg) {
+    ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+  }
+
+  void steer(json data) {
+    auto msg = "42[\"steer\"," + data.dump() + "]";
+    send(msg);
+  }
+  
+public:
+  SimulatorResponder(const uWS::WebSocket<uWS::SERVER>& ws): ws(ws) {}
+
+  void control(double steer_angle, double throttle) {
+    json msgJson;
+    msgJson["steering_angle"] = steer_angle;
+    msgJson["throttle"] = throttle;
+    steer(msgJson);
+  }
+
+  void manual() {
+    std::string msg = "42[\"manual\",{}]";
+    send(msg);
+  }
+};
+
 int main()
 {
   uWS::Hub h;
 
   PidController throttle_controller(PidController::Gains(0.8, 0, 0), 40.0);
-  PidController steer_controller(PidController::Gains(0.247, 0.033, 0.105), 0);
+  PidController steer_controller(PidController::Gains(0.11, 0.033, 0.11), 0);
   time_t timestamp = -1;
 
   h.onMessage([&throttle_controller, &steer_controller, &timestamp](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+      SimulatorResponder responder(ws);
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -58,18 +87,12 @@ int main()
 	  double delta_t = (timestamp < 0) ? 0 : ((float)(cur_ts - timestamp)) / CLOCKS_PER_SEC;
 	  timestamp = cur_ts;
 
-	  std::cout << delta_t << std::endl;
-
-          json msgJson;
-          msgJson["steering_angle"] = steer_controller(cte, delta_t);
-          msgJson["throttle"] = throttle_controller(speed, delta_t);
-          auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+	  double steer_angle = steer_controller(cte, delta_t);
+	  double throttle = throttle_controller(speed, delta_t);
+	  responder.control(steer_angle, throttle);
         }
       } else {
-        // Manual driving
-        std::string msg = "42[\"manual\",{}]";
-        ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+	responder.manual();
       }
     }
   });
