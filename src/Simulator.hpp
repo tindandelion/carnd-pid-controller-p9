@@ -17,6 +17,7 @@ double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
 struct Measurement {
+  int step;
   double delta_t;
   double cte;
   double speed;
@@ -59,6 +60,7 @@ public:
 class Simulator {
   uWS::Hub hub;
   long timestamp;
+  long step;
 
   std::string getData(std::string s) {
     auto found_null = s.find("null");
@@ -72,14 +74,22 @@ class Simulator {
     }
     return "";
   }
+
+  bool isValidData(char* data, size_t length) const {
+    return length && length > 2 && data[0] == '4' && data[1] == '2';
+  }
   
 public:
-  Simulator(): timestamp(-1) {
-    hub.onConnection([](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
+  static const int WARMUP_STEPS = 150;
+  
+  Simulator(): timestamp(-1), step(0) {
+    hub.onConnection([this](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
 	std::cout << "Connected!!!" << std::endl;
+	step = 0;
+	timestamp = -1;
       });
 
-    hub.onDisconnection([&](uWS::WebSocket<uWS::SERVER> ws, int code, char *message, size_t length) {
+    hub.onDisconnection([this](uWS::WebSocket<uWS::SERVER> ws, int code, char *message, size_t length) {
 	uWS::Group<uWS::SERVER>& group = hub;
 	group.close();
 	std::cout << "Disconnected" << std::endl;
@@ -89,14 +99,15 @@ public:
   template <typename EventHandler>
   void onMeasurement(EventHandler& onMeasurement) {
     hub.onMessage([this, &onMeasurement](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
-	if (length && length > 2 && data[0] == '4' && data[1] == '2') {
+	if (isValidData(data, length)) {
 	  SimulatorResponder responder(ws);
 	  auto s = getData(std::string(data).substr(0, length));
-	  if (s != "") {
+	  if (s != "" && ++step > WARMUP_STEPS) {
 	    auto j = json::parse(s);
 	    std::string event = j[0].get<std::string>();
 	    if (event == "telemetry") {
 	      Measurement m;
+	      m.step = step;
 	      m.cte = std::stod(j[1]["cte"].get<std::string>());
 	      m.speed = std::stod(j[1]["speed"].get<std::string>());
 	      m.angle = std::stod(j[1]["steering_angle"].get<std::string>());
