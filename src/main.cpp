@@ -56,6 +56,11 @@ public:
     std::string msg = "42[\"manual\",{}]";
     send(msg);
   }
+
+  void reset() {
+    std::string msg = "42[\"reset\",{}]";
+    send(msg);
+  }
 };
 
 struct Measurement {
@@ -91,11 +96,17 @@ int main()
   PidController throttle_controller(PidController::Gains(0.8, 0, 0), 40.0);
   PidController steer_controller(PidController::Gains(0.11, 0.033, 0.11), 0);
   time_t timestamp = -1;
+  long step = 0;
 
-  auto f = [&throttle_controller, &steer_controller](SimulatorResponder& responder, const Measurement& m) {
+  auto f = [&throttle_controller, &steer_controller, &step](SimulatorResponder& responder, const Measurement& m) {
     double steer_angle = steer_controller(m.cte, m.delta_t);
     double throttle = throttle_controller(m.speed, m.delta_t);
-    responder.control(steer_angle, throttle);
+    if (++step > 1000) {
+      responder.reset();
+      step = 0;
+    } else {
+      responder.control(steer_angle, throttle);      
+    }
   };
 
   h.onMessage([&timestamp, &f](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -128,28 +139,14 @@ int main()
     }
   });
 
-  // We don't need this since we're not using HTTP but if it's removed the program
-  // doesn't compile :-(
-  h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
-    const std::string s = "<h1>Hello world!</h1>";
-    if (req.getUrl().valueLength == 1)
-    {
-      res->end(s.data(), s.length());
-    }
-    else
-    {
-      // i guess this should be done more gracefully?
-      res->end(nullptr, 0);
-    }
-  });
-
   h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
     std::cout << "Connected!!!" << std::endl;
   });
 
   h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code, char *message, size_t length) {
-    ws.close();
-    std::cout << "Disconnected" << std::endl;
+      uWS::Group<uWS::SERVER>& group = h;
+      group.close();
+      std::cout << "Disconnected" << std::endl;
   });
 
   int port = 4567;
