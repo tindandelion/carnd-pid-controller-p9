@@ -26,6 +26,7 @@ struct Measurement {
 
 class SimulatorResponder {
   uWS::WebSocket<uWS::SERVER>& ws;
+  bool reset_detected;
   
   void send(const std::string& msg) {
     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -37,7 +38,7 @@ class SimulatorResponder {
   }
   
 public:
-  SimulatorResponder(uWS::WebSocket<uWS::SERVER>& ws): ws(ws) {}
+  SimulatorResponder(uWS::WebSocket<uWS::SERVER>& ws): ws(ws), reset_detected(false) {}
 
   void control(double steer_angle, double throttle) {
     json msgJson;
@@ -54,7 +55,10 @@ public:
   void reset() {
     std::string msg = "42[\"reset\",{}]";
     send(msg);
+    reset_detected = true;
   }
+
+  bool wasReset() const { return reset_detected; }
 };
 
 class Simulator {
@@ -82,7 +86,7 @@ class Simulator {
 public:
   static const int WARMUP_STEPS = 150;
   
-  Simulator(): timestamp(-1), step(0) {
+  Simulator(): timestamp(-1), step(-1) {
     hub.onConnection([this](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
 	std::cout << "Connected!!!" << std::endl;
 	step = 0;
@@ -99,8 +103,13 @@ public:
   template <typename EventHandler>
   void onMeasurement(EventHandler& onMeasurement) {
     hub.onMessage([this, &onMeasurement](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+	SimulatorResponder responder(ws);
+	if (step < 0) {
+	  responder.manual();
+	  return;
+	}
+
 	if (isValidData(data, length)) {
-	  SimulatorResponder responder(ws);
 	  auto s = getData(std::string(data).substr(0, length));
 	  if (s != "" && ++step > WARMUP_STEPS) {
 	    auto j = json::parse(s);
@@ -117,6 +126,9 @@ public:
 	      timestamp = cur_ts;
 
 	      onMeasurement(responder, m);
+	      if (responder.wasReset()) {
+		step = -1;
+	      }
 	    }
 	  } else {
 	    responder.manual();

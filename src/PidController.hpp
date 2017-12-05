@@ -44,14 +44,18 @@ public:
     set_point(set_point),
     error_i(0),
     prev_error(0),
-    buffer_error_d(LowPassFilter(10)) {}
+    squared_sum_error(0),
+    buffer_error_d(LowPassFilter(10)) { }
+  
   double operator()(double measured_value, double delta_t);
+  double squaredSumError() const { return squared_sum_error; }
 
 private:
   Gains gains;
   double set_point;
   double error_i;
   double prev_error;
+  double squared_sum_error;
   LowPassFilter buffer_error_d;
 };
 
