@@ -11,11 +11,6 @@
 // for convenience
 using json = nlohmann::json;
 
-// For converting back and forth between radians and degrees.
-constexpr double pi() { return M_PI; }
-double deg2rad(double x) { return x * pi() / 180; }
-double rad2deg(double x) { return x * 180 / pi(); }
-
 struct Measurement {
   int step;
   double delta_t;
@@ -88,7 +83,6 @@ public:
   
   Simulator(): timestamp(-1), step(-1) {
     hub.onConnection([this](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
-	std::cout << "Connected!!!" << std::endl;
 	step = 0;
 	timestamp = -1;
       });

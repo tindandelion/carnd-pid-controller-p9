@@ -5,7 +5,6 @@ double PidController::operator()(double measured_value, double delta_t) {
   double error_d = delta_t != 0 ? (error - prev_error) / delta_t : 0;
 
   error_i += error * delta_t;
-  error_d = buffer_error_d(error_d);
   prev_error = error;
   squared_sum_error += error*error;
   
