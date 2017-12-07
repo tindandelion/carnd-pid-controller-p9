@@ -34,7 +34,17 @@ public:
     prev_error(0),
     squared_sum_error(0) { }
   
-  double operator()(double measured_value, double delta_t);
+  double operator()(double measured_value, double delta_t) {
+    double error = set_point - measured_value;
+    double error_d = delta_t != 0 ? (error - prev_error) / delta_t : 0;
+
+    error_i += error * delta_t;
+    prev_error = error;
+    squared_sum_error += error*error;
+  
+    return gains.p * error + gains.i * error_i + gains.d * error_d;
+  }
+  
   double squaredSumError() const { return squared_sum_error; }
 };
 
