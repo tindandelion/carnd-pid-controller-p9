@@ -1,14 +1,14 @@
 # PID controller
 
 This project is a part of Udacity's *Self-Driving Car Nanodegree* program. The
-goal of the project is to implement a PID (Proportional-Integral-Drivative)
+goal of the project is to implement a PID (Proportional-Integral-Derivative)
 controller that keeps the car on the track in the simulator. 
 
 # Reflection
 
 A PID controller is a feedback loop controller continuously calculates an error
-as a difference between a desired setpoint and a measured process variable, and
-applies a correction based on proportional, integral, and devrivative terms. In
+as a difference between a desired set-point and a measured process variable, and
+applies a correction based on proportional, integral, and derivative terms. In
 this project, the object to control is a car in the simulator, the process
 variable is the offset of the car from the center of the road, and the control
 is an angle of the steering wheel that's applied to keep the car centered. 
@@ -23,7 +23,7 @@ is an angle of the steering wheel that's applied to keep the car centered.
   
 **I** is the *integral* term in the equation. It is used to account for a
   residual systematic error that may exist due to the specifics of the
-  controlled device (e.g. the imsalignments of the wheels), or the enviroment
+  controlled device (e.g. the misalignments of the wheels), or the environment
   (e.g. strong side wind). The effect of the integral term is that it
   accumulates over time, thus providing the control signal that eventually
   brings the error value to zero. 
@@ -38,7 +38,7 @@ is an angle of the steering wheel that's applied to keep the car centered.
 
 In general, finding the optimal P, I, and D parameter set is a challenging
 trial-and-error task. In this project, I used the "Twiddle" algorithm to adjust
-the parameters. The essense of the Twiddle (which essentially is a variation of
+the parameters. The essence of the Twiddle (which essentially is a variation of
 a coordinate accent) is that it adjusts the coefficients, trying to find the
 lowest overall error. This algorithm is useful when fine-tuning the roughly
 estimated parameters, although somewhat time-consuming and prone to getting stuck in
@@ -74,7 +74,7 @@ The values for PID gains, fine-tuned with twiddle procedure, are:
 
 ### Twiddler 
 
-This is an implementation of the fine-tuining 'Twiddle' algorithm. Given initial
+This is an implementation of the fine-tuning 'Twiddle' algorithm. Given initial
 values for P, I, and D gains, it runs the simulation for a while, records the
 overall error, and then restarts the simulation with the adjusted set of
 values. The helper `TwiddleStep` class keeps track of which parameter is being
