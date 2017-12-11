@@ -24,8 +24,8 @@ int main(int argc, char** argv)
 {
   const int port = 4567;
   Simulator simulator;
-  ProductionCarController production(Gains(0.19, 1.913, 0.01), 30.0);
-  Twiddler twiddle(3500, 3.0, 50.0, Gains(0.2, 1.0, 0.01), Gains(0.1, 0.1, 0.1));
+  ProductionCarController production(Gains(0.31, 1.1, 0.01), 30.0);
+  Twiddler twiddle(3500, 3.0, 40.0, Gains(0.2, 1.0, 0.01), Gains(0.1, 0.1, 0.1));
 
   if ((argc > 1) && (string(argv[1]) == "twiddle")) {
     cout << "Running twiddle" << endl;
