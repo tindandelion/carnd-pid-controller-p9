@@ -68,6 +68,10 @@ parameters. Inside, it encapsulates 2 separate PID controllers (instances of
 primary focus of this project is on the steering, the speed controller is a
 simple P-controller that just keeps the speed constant at 30 mph.
 
+The values for PID gains, fine-tuned with twiddle procedure, are: 
+
+`P: 0.31, I: 1.1, D: 0.01`
+
 ### Twiddler 
 
 This is an implementation of the fine-tuining 'Twiddle' algorithm. Given initial
@@ -79,7 +83,7 @@ enough.
 
 
 To run the program in the production mode, run `./pid` without any
-parameters. For optimization, run `./pid twiddle`.
+parameters. For twiddle optimization, run `./pid twiddle`.
 
 
 
