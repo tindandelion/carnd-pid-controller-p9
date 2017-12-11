@@ -72,7 +72,7 @@ The values for PID gains, fine-tuned with twiddle procedure, are:
 
 `P: 0.31, I: 1.1, D: 0.01`
 
-### Twiddler 
+### `Twiddler` 
 
 This is an implementation of the fine-tuning 'Twiddle' algorithm. Given initial
 values for P, I, and D gains, it runs the simulation for a while, records the
